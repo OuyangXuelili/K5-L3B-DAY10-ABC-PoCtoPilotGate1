@@ -32,11 +32,11 @@ Nhóm trưởng; phụ trách `lab10/guards.py`, Phiếu B mục B7.1, phần k�
 
 ### Đóng góp cụ thể
 
-Tự điền sau khi thực hiện.
+Đã rà tính khả thi Phiếu A, đối chiếu metric chọn policy và telemetry48h; hoàn thiện guard G1/G2/G3 và cấu hình vòng1, đo baseline/sau sửa/prepared, viết PhiếuB. Dùng ChatGPT hỗ trợ đọc code, soạn guard và rà tài liệu; kiểm lại bằng13 public tests,10 kiểm tra guard trực tiếp,2adhoc vàreport có runID. Chưa thực hiện vòng2 hoặc đánh giá của người độc lập.
 
 ### Bằng chứng
 
-Tự điền mã commit, mã lần chạy và mục phiếu tương ứng sau khi thực hiện.
+Commit ký `62560b8`; B0–B8; baseline `R-base-before-20261119-160126-b45eeb`, prepared `R-base-prepared-20261119-161425-5cdd59`; checkpoint `8e3b74dc`. Commit chốt vòng 1 tra theo message “Chốt cổng vòng 1 và quyết định v1” trong lịch sử của guards_round1.py và Phiếu B.
 
 ### Exit ticket
 
