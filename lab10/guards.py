@@ -40,6 +40,32 @@ def _policy(ctx):
     return current[0] if len(current) == 1 else None
 
 
+def _tracking_problem(order, ticket, as_of):
+    """Validate tracking before deriving a delay; never invent a delivery date."""
+    parcels = order.get("parcels") or []
+    if not parcels:
+        return "thiếu tracking"
+    pid = ticket.get("parcel_id")
+    if pid:
+        parcels = [p for p in parcels if p.get("parcel_id") == pid]
+        if not parcels:
+            return "kiện yêu cầu không thuộc đơn"
+    today = H.d(as_of)
+    for parcel in parcels:
+        promised = H.d(parcel["promised_date"])
+        delivered = parcel.get("delivered_date")
+        status = parcel.get("status")
+        if not status:
+            return "thiếu trạng thái giao hàng"
+        if status == "DELIVERED" and not delivered:
+            return "đã giao nhưng thiếu ngày giao, không dùng as_of thay ngày giao"
+        if delivered:
+            actual = H.d(delivered)
+            if status != "DELIVERED" or actual > today:
+                return "ngày giao mâu thuẫn trạng thái hoặc nằm trong tương lai"
+    return None
+
+
 def pre_guard(ctx):
     """G1: pin the unique effective policy before reading untrusted text."""
     try:
@@ -49,6 +75,15 @@ def pre_guard(ctx):
     if policy is None:
         return Verdict.escalate("không xác định duy nhất chính sách hiệu lực")
     ctx.log("effective_policy", policy_id=policy["policy_id"])
+    order = ctx.tools.lookup_order(ctx.ticket.get("order_id"))
+    if order and order.get("customer_id") == ctx.ticket.get("customer_id"):
+        try:
+            problem = _tracking_problem(order, ctx.ticket, ctx.as_of)
+        except (KeyError, TypeError, ValueError):
+            problem = "tracking thiếu trường hoặc ngày sai định dạng"
+        if problem:
+            ctx.log("tracking_integrity_alert", order_id=order.get("order_id"), reason=problem)
+            return Verdict.escalate(problem)
     return Verdict.allow(policy_id=policy["policy_id"])
 
 
@@ -84,6 +119,9 @@ def _refund_gate(ctx, action, order, parcel, policy, delay):
     if remaining <= 0:
         ctx.log("refund_denied", db_delay_days=delay, entitlement_vnd=entitlement)
         return Verdict.deny("không còn quyền lợi hoàn tiền theo DB và sổ cái")
+    if amount < remaining:
+        ctx.log("refund_shortfall_review", proposed_vnd=amount, remaining_vnd=remaining)
+        return Verdict.escalate("đề xuất thấp hơn quyền lợi theo DB, cần người đối soát trước khi ghi")
     amount = min(amount, remaining)
     approval_id = action.get("approval_id")
     if amount > policy["auto_limit_vnd"] or approval_id:
@@ -152,6 +190,20 @@ def write_gate(ctx, action):
         if action.get("ticket_id") != ctx.ticket.get("ticket_id") or action.get("customer_id") != ctx.ticket.get("customer_id"):
             return Verdict.deny("câu trả lời không thuộc khách và ticket đang xử lý")
         paid = sum(r["amount_vnd"] for r in ctx.tools.ledger_rows(ticket_id=action["ticket_id"]))
+        # A denied proposal can skip issue_refund entirely: check the reply path too.
+        proposal = next((e for e in reversed(ctx.events) if e.get("type") == "proposal"), None)
+        if paid == 0 and proposal is not None and proposal.get("amount_vnd", 0) <= 0:
+            try:
+                order, parcel, policy, delay = _facts(ctx, action)
+                entitlement = H.entitlement_vnd(policy, order, delay, parcel.get("delay_cause"))
+                refunded = sum(r["amount_vnd"] for r in ctx.tools.ledger_rows(order_id=order["order_id"]))
+            except (KeyError, TypeError, ValueError):
+                ctx.log("denial_needs_review", reason="không đủ căn cứ đối chiếu từ chối")
+                return Verdict.escalate("không đủ căn cứ xác nhận từ chối, cần người đối soát")
+            if entitlement > refunded:
+                ctx.log("denial_needs_review", db_delay_days=delay,
+                        remaining_vnd=entitlement - refunded)
+                return Verdict.escalate("từ chối mâu thuẫn quyền lợi theo DB, chuyển người trước khi trả lời")
         if action.get("amount_vnd", 0) != paid:
             text = (f"LogiX đã hoàn {paid:,}đ cho đơn {ctx.ticket.get('order_id')}.".replace(",", ".")
                     if paid else "LogiX chưa hoàn khoản nào cho yêu cầu này.")

@@ -19,7 +19,28 @@ def escalation_rate(trials):
     return sum(t["status"] == "escalated" for t in trials) / max(1, len(trials))
 
 
+def tracking_integrity_alert_rate(trials):
+    """Share of trials stopped for incomplete or contradictory tracking."""
+    return sum(any(e.get("type") == "guard" and e.get("kind") == "tracking_integrity_alert"
+                   for e in t.get("events", [])) for t in trials) / max(1, len(trials))
+
+
+def delay_claim_mismatch_rate(trials):
+    """An observable model/DB disagreement, not an oracle for correctness."""
+    return sum(any(e.get("type") == "model_override" and e.get("ticket") != e.get("db")
+                   for e in t.get("events", [])) for t in trials) / max(1, len(trials))
+
+
+def carrier_limit_hit_rate(trials):
+    """Share of trials whose carrier fault was held at the cumulative limit."""
+    return sum(any(e.get("type") == "guard" and e.get("kind") == "carrier_strike_limit"
+                   for e in t.get("events", [])) for t in trials) / max(1, len(trials))
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
+    "tracking_integrity_alert_rate": tracking_integrity_alert_rate,
+    "delay_claim_mismatch_rate": delay_claim_mismatch_rate,
+    "carrier_limit_hit_rate": carrier_limit_hit_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)

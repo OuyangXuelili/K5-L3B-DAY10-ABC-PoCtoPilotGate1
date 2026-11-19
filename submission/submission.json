@@ -1,12 +1,17 @@
 {
-  "team": "",
-  "members": [],
-  "incident": "",
-  "decision_v1": "",
-  "decision_v2": "",
+  "team": "K5-L3B-DAY10-ABC-PoCtoPilotGate1",
+  "members": [
+    "TranVanQuang-2A202604032",
+    "NguyenHoangAn-2A202604025",
+    "VuTrongThang-2A202604022",
+    "PhamVanChieu-2A202604033"
+  ],
+  "incident": "S1",
+  "decision_v1": "Cải tiến thêm",
+  "decision_v2": "Tiếp tục",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "Thiết kế giả định tracking trong DB đúng và đồng bộ. S1 có 2/13 ticket DELIVERED nhưng thiếu ngày giao, tạo 10/65 lượt cảnh báo (15,38%). Nếu lỗi dữ liệu tăng, tải chuyển người có thể tăng; cần đo escalation so với 23,08%, mức nên có 25% và công suất 1 người × 6 ca/giờ, có xét lưu lượng theo giờ và phần kiểm mẫu; vượt 25% không tự đồng nghĩa quá tải.",
+    "reduce_or_prevent": "Cổng ngăn ghi tiền/lỗi hãng từ mâu thuẫn tracking nhận diện được trước khi ghi và chuyển người khi phát hiện từ chối hoặc chi thiếu. Trên cùng 65 lượt thử S1, prepared có 275.000đ hoàn sai và 5 lỗi hãng oan, after đều về 0. Đây chỉ là giảm rủi ro tổng thể: DB sai nhưng nhất quán, xử lý đồng thời, thiếu lịch sử lỗi hãng 7 ngày hoặc người không tiếp quản vẫn là điểm hở.",
+    "measure_in_pilot": "Trước Gate 2, đo lại chất lượng và độ trễ đồng bộ tracking, quyền lợi sau đối soát, escalation so với 23,08%, review_rate so với 38,46%, thời gian chờ so với 0 phút mô phỏng và SLA 60 phút; đối chiếu chi phí toàn phần với 5.870đ/ticket, ROI 0,70 và kho CT 7.053đ/ticket trên S1. Theo dõi tải theo giờ/kho, lịch sử lỗi hãng 7 ngày và thời gian tiếp quản cảnh báo."
   }
 }
