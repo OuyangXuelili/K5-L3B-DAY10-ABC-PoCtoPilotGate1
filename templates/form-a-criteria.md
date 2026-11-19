@@ -50,8 +50,6 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
-|---|---|---|
 | **Bước / hành vi được đo** | Chọn phiên bản chính sách hoàn tiền: kiểm tra `policy_id` agent chọn có đúng phiên bản đang có hiệu lực tại ngày xử lý `as_of` của bộ dữ liệu hay không. | Toàn bộ luồng tác động bên ngoài: Hành vi hoàn tiền (`issue_refund`) và ghi lỗi phạt hãng (`file_carrier_fault`) |
 | **Thước đo** (một câu, có đơn vị) | **Tỉ lệ lần chọn sai phiên bản chính sách (%)**: phần trăm lần chạy có sự kiện chọn chính sách mà `policy_id` được chọn khác phiên bản có hiệu lực theo khoảng ngày trong bảng `policies`. | Tỉ lệ khiếu nại phát sinh từ khách hàng hoặc hãng vận chuyển đối với các đơn đã xử lý tự động trong vòng 48h (đơn vị: %) |
 | **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Sau khi tiêu chí được ký và push, lấy sự kiện có `type = "policy"`, trường `policy_id`, trong `runs/<mã lần chạy>/traces/<ticket_id>@<seed>.json`. Đối chiếu với `policies[].policy_id`, `effective_from`, `effective_to` và `as_of` trong `data/world.json`. Bộ nền có 22 ticket × 5 seed; số lần đủ điều kiện đối chiếu được báo riêng. Ân lập nhãn tham chiếu từ khoảng hiệu lực của chính sách và gửi Quang rà soát; không lấy `index_active` làm nhãn đúng. Khi đánh giá bộ sự cố, dùng dữ liệu của đúng bộ sau khi áp dụng `world_patch.json`. | Log lệnh ghi trong sổ cái (`action.issue_refund`, `action.file_carrier_fault`) kết hợp dữ liệu ticket khiếu nại/tranh chấp mới từ cổng CSKH/Đối soát; không cần nhãn thủ công vì tín hiệu phát sinh từ phản ánh thực tế ngoài đời |
