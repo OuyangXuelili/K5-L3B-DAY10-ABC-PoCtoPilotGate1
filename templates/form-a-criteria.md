@@ -50,12 +50,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
+| **Bước / hành vi được đo** | Chọn phiên bản chính sách hoàn tiền: kiểm tra `policy_id` agent chọn có đúng phiên bản đang có hiệu lực tại ngày xử lý `as_of` của bộ dữ liệu hay không. | |
+| **Thước đo** (một câu, có đơn vị) | **Tỉ lệ lần chọn sai phiên bản chính sách (%)**: phần trăm lần chạy có sự kiện chọn chính sách mà `policy_id` được chọn khác phiên bản có hiệu lực theo khoảng ngày trong bảng `policies`. | |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Sau khi tiêu chí được ký và push, lấy sự kiện có `type = "policy"`, trường `policy_id`, trong `runs/<mã lần chạy>/traces/<ticket_id>@<seed>.json`. Đối chiếu với `policies[].policy_id`, `effective_from`, `effective_to` và `as_of` trong `data/world.json`. Bộ nền có 22 ticket × 5 seed; số lần đủ điều kiện đối chiếu được báo riêng. Ân lập nhãn tham chiếu từ khoảng hiệu lực của chính sách và gửi Quang rà soát; không lấy `index_active` làm nhãn đúng. Khi đánh giá bộ sự cố, dùng dữ liệu của đúng bộ sau khi áp dụng `world_patch.json`. | |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với mỗi lần chạy có sự kiện `policy`, xác định duy nhất một chính sách thỏa `effective_from <= as_of <= effective_to`; `effective_to` trống nghĩa là không có ngày kết thúc. **Tỉ lệ sai = số lần `policy_id` được chọn khác chính sách tham chiếu / số lần có sự kiện `policy` và xác định được duy nhất chính sách tham chiếu × 100%.** Lần chạy không tới bước chọn chính sách được loại khỏi mẫu số và đếm riêng. Nếu thiếu trường cần thiết, không có hoặc có nhiều chính sách cùng hiệu lực, đếm riêng là không đủ dữ liệu đối chiếu, không tự gán đúng/sai. Báo kèm tổng số lần chạy, mẫu số và số lần bị loại theo từng lý do; mẫu số bằng 0 thì ghi **N/A**, không ghi 0% lỗi. | |
 | **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Chọn đúng phiên bản không chứng minh agent tính đúng tiền, dùng đúng phê duyệt hoặc ghi lỗi đúng hãng. Chỉ số không phát hiện nội dung chính sách hay ngày hiệu lực trong nguồn tham chiếu bị nhập sai. Không đánh giá được những lần chưa tới bước chọn chính sách; vì vậy phải báo số lần bị loại, không suy ra chất lượng toàn luồng chỉ từ tỉ lệ này. | |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
